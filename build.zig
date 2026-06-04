@@ -18,4 +18,11 @@ pub fn build(b: *std.Build) void {
     const run_cmd = b.addRunArtifact(exe);
     run_step.dependOn(&run_cmd.step);
     run_cmd.step.dependOn(b.getInstallStep());
+
+    const show_cmd = b.addSystemCommand(&.{"kitty"});
+    show_cmd.addArgs(&.{ "+kitten", "icat", "./zig-out/out.ppm" });
+    show_cmd.step.dependOn(&run_cmd.step);
+
+    const debug_step = b.step("show", "Show the resulting ppm in the terminal");
+    debug_step.dependOn(&show_cmd.step);
 }
