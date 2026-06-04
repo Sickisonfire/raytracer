@@ -13,8 +13,15 @@ pub fn write_ppm(io: std.Io, dir: std.Io.Dir, file_name: []const u8) !void {
     _ = try interface.print("{d} {d}\n", .{ w, h });
     _ = try interface.write("255\n");
 
+    const progress = std.Progress.start(io, .{});
+    defer progress.end();
+    const node = progress.start("render to ppm", w * h);
+    defer node.end();
+
     for (0..w) |i| {
         for (0..h) |j| {
+            node.completeOne();
+
             const r: f32 = @as(f32, @floatFromInt(j)) / (w - 1);
             const g: f32 = @as(f32, @floatFromInt(i)) / (h - 1);
             const b: f32 = 0.0;
