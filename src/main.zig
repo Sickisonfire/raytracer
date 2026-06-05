@@ -2,6 +2,8 @@ const std = @import("std");
 const ppm = @import("ppm.zig");
 const Io = std.Io;
 
+pub const Point3 = Vec3;
+pub const Color = Vec3;
 pub const Vec3 = struct {
     inner: [3]f64,
 
