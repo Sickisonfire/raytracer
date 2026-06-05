@@ -1,31 +1,28 @@
 const std = @import("std");
-const ppm = @import("ppm.zig");
-const Io = std.Io;
-
 pub const Vec3 = struct {
     inner: [3]f64,
 
-    const zero = Vec3{ .inner = .{ 0.0, 0.0, 0.0 } };
+    pub const zero = Vec3{ .inner = .{ 0.0, 0.0, 0.0 } };
 
     /// euclidean length
     ///
     /// use lengthSquared if you only need to compare the length of two vectors.
-    fn length(self: Vec3) f64 {
+    pub fn length(self: Vec3) f64 {
         return std.math.sqrt(self.lengthSquared());
     }
     /// squared length
     ///
     /// used to compare the length of two vectors without the cost of the sqrt
     /// call.
-    fn lengthSquared(self: Vec3) f64 {
+    pub fn lengthSquared(self: Vec3) f64 {
         return self.inner[0] * self.inner[0] + self.inner[1] * self.inner[1] + self.inner[2] * self.inner[2];
     }
 
-    fn dot(self: *Vec3, other: *Vec3) f64 {
+    pub fn dot(self: *Vec3, other: *Vec3) f64 {
         return self.inner[0] * other.inner[0] + self.inner[1] * other.inner[1] + self.inner[2] * other.inner[2];
     }
 
-    fn cross(self: *Vec3, other: *Vec3) Vec3 {
+    pub fn cross(self: *Vec3, other: *Vec3) Vec3 {
         return Vec3{ .inner = .{
             self.inner[1] * other.inner[2] - self.inner[2] * other.inner[1],
             self.inner[2] * other.inner[0] - self.inner[0] * other.inner[2],
@@ -33,7 +30,7 @@ pub const Vec3 = struct {
         } };
     }
 
-    fn unitVector(self: Vec3) Vec3 {
+    pub fn unitVector(self: Vec3) Vec3 {
         const len = self.length();
 
         return Vec3{ .inner = .{
@@ -53,11 +50,3 @@ pub const Vec3 = struct {
         _ = try out.write(pix);
     }
 };
-pub fn main(init: std.process.Init) !void {
-    const arena: std.mem.Allocator = init.arena.allocator();
-    _ = arena;
-    const io = init.io;
-    const dir = try std.Io.Dir.cwd().openDir(io, "zig-out", .{});
-
-    try ppm.write_ppm(io, dir, "out.ppm");
-}

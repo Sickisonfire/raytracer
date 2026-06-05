@@ -1,4 +1,6 @@
 const std = @import("std");
+const vec = @import("vector.zig");
+const Vec3 = vec.Vec3;
 
 pub fn write_ppm(io: std.Io, dir: std.Io.Dir, file_name: []const u8) !void {
     var f = try dir.createFile(io, file_name, .{});
@@ -26,12 +28,9 @@ pub fn write_ppm(io: std.Io, dir: std.Io.Dir, file_name: []const u8) !void {
             const g: f32 = @as(f32, @floatFromInt(i)) / (h - 1);
             const b: f32 = 0.0;
 
-            const ir: u32 = @intFromFloat(255.999 * r);
-            const ig: u32 = @intFromFloat(255.999 * g);
-            const ib: u32 = @intFromFloat(255.999 * b);
-            var row_buf: [128]u8 = undefined;
-            const pix = try std.fmt.bufPrint(&row_buf, "{d} {d} {d}\n", .{ ir, ig, ib });
-            _ = try interface.write(pix);
+            var color = Vec3{ .inner = .{ r, g, b } };
+
+            try Vec3.write_color(interface, &color);
         }
     }
     try writer.flush();
