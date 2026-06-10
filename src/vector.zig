@@ -7,6 +7,40 @@ pub const Vec3 = struct {
 
     pub const zero = Vec3{ .inner = .{ 0.0, 0.0, 0.0 } };
 
+    pub fn add(self: *Vec3, other: *Vec3) *Vec3 {
+        self.inner[0] += other.inner[0];
+        self.inner[1] += other.inner[1];
+        self.inner[2] += other.inner[2];
+
+        return self;
+    }
+
+    pub fn multScalar(self: *Vec3, t: f64) *Vec3 {
+        self.inner[0] *= t;
+        self.inner[1] *= t;
+        self.inner[2] *= t;
+
+        return self;
+    }
+
+    pub fn divScalar(self: *Vec3, t: f64) *Vec3 {
+        self.inner[0] /= t;
+        self.inner[1] /= t;
+        self.inner[2] /= t;
+
+        return self;
+    }
+
+    pub fn x(self: Vec3) f64 {
+        return self.inner[0];
+    }
+    pub fn y(self: Vec3) f64 {
+        return self.inner[1];
+    }
+    pub fn z(self: Vec3) f64 {
+        return self.inner[2];
+    }
+
     /// euclidean length
     ///
     /// use lengthSquared if you only need to compare the length of two vectors.
