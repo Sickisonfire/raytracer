@@ -7,28 +7,32 @@ pub const Vec3 = struct {
 
     pub const zero = Vec3{ .inner = .{ 0.0, 0.0, 0.0 } };
 
-    pub fn add(self: *Vec3, other: *Vec3) *Vec3 {
+    pub fn new(x_: f64, y_: f64, z_: f64) Vec3 {
+        return Vec3{ .inner = .{ x_, y_, z_ } };
+    }
+
+    pub fn add(self: *Vec3, other: Vec3) void {
         self.inner[0] += other.inner[0];
         self.inner[1] += other.inner[1];
         self.inner[2] += other.inner[2];
-
-        return self;
     }
 
-    pub fn multScalar(self: *Vec3, t: f64) *Vec3 {
+    pub fn sub(self: *Vec3, other: Vec3) void {
+        self.inner[0] -= other.inner[0];
+        self.inner[1] -= other.inner[1];
+        self.inner[2] -= other.inner[2];
+    }
+
+    pub fn multScalar(self: *Vec3, t: f64) void {
         self.inner[0] *= t;
         self.inner[1] *= t;
         self.inner[2] *= t;
-
-        return self;
     }
 
-    pub fn divScalar(self: *Vec3, t: f64) *Vec3 {
+    pub fn divScalar(self: *Vec3, t: f64) void {
         self.inner[0] /= t;
         self.inner[1] /= t;
         self.inner[2] /= t;
-
-        return self;
     }
 
     pub fn x(self: Vec3) f64 {
@@ -77,7 +81,7 @@ pub const Vec3 = struct {
         } };
     }
 
-    pub fn write_color(out: *std.Io.Writer, color: *Vec3) !void {
+    pub fn write_color(out: *std.Io.Writer, color: *const Vec3) !void {
         const ir: u32 = @intFromFloat(255.999 * color.inner[0]);
         const ig: u32 = @intFromFloat(255.999 * color.inner[1]);
         const ib: u32 = @intFromFloat(255.999 * color.inner[2]);

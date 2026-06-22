@@ -3,21 +3,37 @@ const vec = @import("vector.zig");
 
 const Point3 = vec.Point3;
 const Vec3 = vec.Vec3;
+const Color = vec.Color;
 
 const Ray = @This();
 
 origin: Point3,
 direction: Vec3,
 
-fn new(origin: Point3, direction: Vec3) Ray {
+pub fn new(origin: Point3, direction: Vec3) Ray {
     return Ray{ .origin = origin, .direction = direction };
 }
 
-fn at(self: *Ray, t: f64) Point3 {
+pub fn at(self: *Ray, t: f64) Point3 {
     var ret = self.direction;
     _ = ret.multScalar(t).add(&self.origin);
 
     return ret;
+}
+
+pub fn getColor(self: *Ray) Color {
+    const unit_dir = self.direction.unitVector();
+    // lerp
+    // start_color + (end_color - start_color)a
+    const a = 0.5 * (unit_dir.y() + 1.0);
+    std.debug.print("{any}", .{unit_dir});
+    var start_color: Color = .new(1.0, 1.0, 1.0);
+    var end_color: Color = .new(0.5, 0.7, 1.0);
+    end_color.sub(start_color);
+    end_color.multScalar(a);
+    start_color.add(end_color);
+
+    return start_color;
 }
 
 test "at" {
