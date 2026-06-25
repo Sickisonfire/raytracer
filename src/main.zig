@@ -1,5 +1,4 @@
 const std = @import("std");
-const ppm = @import("ppm.zig");
 const vec = @import("vector.zig");
 const Ray = @import("ray.zig");
 const Vec3 = vec.Vec3;
