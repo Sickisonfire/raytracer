@@ -74,61 +74,32 @@ const Viewport = struct {
         // viewport x vector
         const viewport_u: Vec3 = .new(self.width, 0, 0);
         // viewport x segment length
-        const delta_u = blk: {
-            var du = viewport_u;
-            du.divScalar(@floatFromInt(self.image.width));
-            break :blk du;
-        };
+        const delta_u: Vec3 = viewport_u.divScalar(@floatFromInt(self.image.width));
 
         // viewport y vector
         const viewport_v: Vec3 = .new(0, -self.height, 0);
         // viewport y segment length
-        const delta_v = blk: {
-            var dv = viewport_v;
-            dv.divScalar(@floatFromInt(self.image.height));
-            break :blk dv;
-        };
+        const delta_v = viewport_v.divScalar(@floatFromInt(self.image.height));
         // top left (0,0) vector from camera center
-        const viewport_top_left = blk: {
-            var v = cam.center;
-            var vu = viewport_u;
-            vu.divScalar(2);
-            var vv = viewport_v;
-            vv.divScalar(2);
-            const vc: Vec3 = .new(0, 0, cam.focal_length);
-            v.sub(vc);
-            v.sub(vu);
-            v.sub(vv);
-            break :blk v;
-        };
+
+        const viewport_top_left = cam.center
+            .sub(&.new(0, 0, cam.focal_length))
+            .sub(&viewport_u.divScalar(2))
+            .sub(&viewport_v.divScalar(2));
 
         // offset to find the "center" of the pixel
-        const pixel_0_0 = blk: {
-            var v = viewport_top_left;
-            var delta_uv = delta_u;
-            delta_uv.add(delta_v);
-            delta_uv.divScalar(2);
-
-            v.add(delta_uv);
-            break :blk v;
-        };
+        const pixel_0_0 = &viewport_top_left
+            .add(&delta_u.add(&delta_v).divScalar(2));
 
         for (0..h) |i| {
             for (0..w) |j| {
                 node.completeOne();
 
-                var px_loc = blk: {
-                    var p = pixel_0_0;
-                    var dx = delta_u;
-                    dx.multScalar(@floatFromInt(j));
-                    var dy = delta_v;
-                    dy.multScalar(@floatFromInt(i));
-                    p.add(dx);
-                    p.add(dy);
-                    break :blk p;
-                };
+                const px_loc = &pixel_0_0
+                    .add(&delta_u.multScalar(@floatFromInt(j)))
+                    .add(&delta_v.multScalar(@floatFromInt(i)))
+                    .sub(&cam.center);
 
-                px_loc.sub(cam.center);
                 var ray: Ray = .new(cam.center, px_loc);
 
                 const color = ray.getColor();
