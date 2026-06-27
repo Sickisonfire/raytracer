@@ -15,10 +15,7 @@ pub fn new(origin: Point3, direction: *const Vec3) Ray {
 }
 
 pub fn at(self: *Ray, t: f64) Point3 {
-    var ret = self.direction;
-    _ = ret.multScalar(t).add(&self.origin);
-
-    return ret;
+    return self.direction.multScalar(t).add(&self.origin);
 }
 
 pub fn getColor(self: *Ray) Color {
