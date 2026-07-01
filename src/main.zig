@@ -1,6 +1,7 @@
 const std = @import("std");
 const vec = @import("vector.zig");
 const Ray = @import("ray.zig");
+const Hittable = @import("hittable.zig");
 const Vec3 = vec.Vec3;
 const Io = std.Io;
 
@@ -38,8 +39,9 @@ const Viewport = struct {
     width: f64,
     height: f64,
     image: Image,
+    world: *Hittable.Item,
 
-    pub fn init(image: Image) Viewport {
+    pub fn init(image: Image, world: *Hittable.Item) Viewport {
         const viewport_height = 2.0;
         const viewport_width = blk: {
             const w: f64 = @floatFromInt(image.width);
@@ -51,6 +53,7 @@ const Viewport = struct {
             .width = viewport_width,
             .height = 2.0,
             .image = image,
+            .world = world,
         };
     }
     pub fn write_ppm(self: *Viewport, cam: Camera, io: std.Io, dir: std.Io.Dir, file_name: []const u8) !void {
@@ -102,7 +105,7 @@ const Viewport = struct {
 
                 var ray: Ray = .new(cam.center, px_loc);
 
-                const color = ray.getColor();
+                const color = ray.getColor(self.world);
 
                 try Vec3.write_color(interface, &color);
             }
@@ -112,13 +115,20 @@ const Viewport = struct {
 };
 pub fn main(init: std.process.Init) !void {
     const arena: std.mem.Allocator = init.arena.allocator();
-    _ = arena;
     const io = init.io;
     const dir = try std.Io.Dir.cwd().openDir(io, "zig-out", .{});
 
     const image: Image = .init(400, 16.0 / 9.0);
 
-    var viewport: Viewport = .init(image);
+    var h1 = Hittable.Item{ .sphere = .new(.new(0, 0, -1), 0.5) };
+    var h2 = Hittable.Item{ .sphere = .new(.new(0, -100.5, -1), 100) };
+
+    var world_list: Hittable.List = .new(arena);
+    try world_list.append(&h1);
+    try world_list.append(&h2);
+    var world = Hittable.Item{ .list = world_list };
+
+    var viewport: Viewport = .init(image, &world);
     const camera: Camera = .init(.zero, 1.0);
 
     try viewport.write_ppm(camera, io, dir, "out.ppm");
