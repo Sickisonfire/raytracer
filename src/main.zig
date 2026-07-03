@@ -1,15 +1,15 @@
 const std = @import("std");
-const vec = @import("vector.zig");
+const math = @import("math.zig");
 const Ray = @import("ray.zig");
 const Hittable = @import("hittable.zig");
-const Vec3 = vec.Vec3;
+const Vec3 = math.Vec3;
 const Io = std.Io;
 
 const Camera = struct {
-    center: vec.Point3,
+    center: math.Point3,
     focal_length: f64,
 
-    pub fn init(center: vec.Point3, focal_length: f64) Camera {
+    pub fn init(center: math.Point3, focal_length: f64) Camera {
         return Camera{
             .center = center,
             .focal_length = focal_length,
@@ -115,6 +115,7 @@ const Viewport = struct {
 };
 pub fn main(init: std.process.Init) !void {
     const arena: std.mem.Allocator = init.arena.allocator();
+    defer _ = init.arena.reset(.free_all);
     const io = init.io;
     const dir = try std.Io.Dir.cwd().openDir(io, "zig-out", .{});
 
@@ -124,6 +125,8 @@ pub fn main(init: std.process.Init) !void {
     var h2 = Hittable.Item{ .sphere = .new(.new(0, -100.5, -1), 100) };
 
     var world_list: Hittable.List = .new(arena);
+    defer world_list.deinit();
+
     try world_list.append(&h1);
     try world_list.append(&h2);
     var world = Hittable.Item{ .list = world_list };

@@ -106,6 +106,7 @@ pub const Interval = struct {
             .min = min,
         };
     }
+
     pub fn interval(min: f64, max: f64) Interval {
         return new(min, max);
     }

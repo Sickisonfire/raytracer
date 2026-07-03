@@ -1,10 +1,11 @@
 const std = @import("std");
-const vec = @import("vector.zig");
+const math = @import("math.zig");
 const ray = @import("ray.zig");
 
-const Vec3 = vec.Vec3;
-const Point3 = vec.Point3;
+const Vec3 = math.Vec3;
+const Point3 = math.Point3;
 const Ray = ray.Ray;
+const Interval = math.Interval;
 
 pub const Record = struct {
     p: Point3 = .zero,
@@ -25,9 +26,9 @@ pub const Item = union(enum) {
     sphere: Sphere,
     list: List,
 
-    pub fn hit(self: Item, r: *Ray, ray_tmin: f64, ray_tmax: f64, record: *Record) bool {
+    pub fn hit(self: Item, r: *Ray, ray_t: Interval, record: *Record) bool {
         return switch (self) {
-            inline else => |v| v.hit(r, ray_tmin, ray_tmax, record),
+            inline else => |v| v.hit(r, ray_t, record),
         };
     }
 };
@@ -42,8 +43,8 @@ pub const List = struct {
         };
     }
 
-    pub fn deinit(self: *List) !void {
-        self.alloc.free(self.list);
+    pub fn deinit(self: *List) void {
+        self.list.deinit(self.alloc);
     }
 
     pub fn append(self: *List, item: *Item) !void {
@@ -52,13 +53,13 @@ pub const List = struct {
         self.list.appendAssumeCapacity(item);
     }
 
-    pub fn hit(self: List, r: *Ray, ray_tmin: f64, ray_tmax: f64, record: *Record) bool {
+    pub fn hit(self: List, r: *Ray, ray_t: Interval, record: *Record) bool {
         var temp_record: Record = .new();
         var hit_obj = false;
-        var closest = ray_tmax;
+        var closest = ray_t.max;
 
         for (self.list.items) |hittable| {
-            if (hittable.hit(r, ray_tmin, closest, &temp_record)) {
+            if (hittable.hit(r, .interval(ray_t.min, closest), &temp_record)) {
                 hit_obj = true;
                 closest = temp_record.t;
                 record.* = temp_record;
@@ -79,7 +80,7 @@ pub const Sphere = struct {
             .radius = @max(0, radius),
         };
     }
-    pub fn hit(self: Sphere, r: *Ray, ray_tmin: f64, ray_tmax: f64, record: *Record) bool {
+    pub fn hit(self: Sphere, r: *Ray, ray_t: Interval, record: *Record) bool {
         const oc: Vec3 = self.center.sub(&r.origin);
         const a: f64 = r.direction.lengthSquared();
         const h: f64 = r.direction.dot(&oc);
@@ -94,9 +95,9 @@ pub const Sphere = struct {
 
         var root = (h - sqrt) / a;
 
-        if (root <= ray_tmin or root >= ray_tmax) {
+        if (root <= ray_t.min or root >= ray_t.max) {
             root = (h + sqrt) / a;
-            if (root <= ray_tmin or root >= ray_tmax) {
+            if (root <= ray_t.min or root >= ray_t.max) {
                 return false;
             }
         }

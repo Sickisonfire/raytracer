@@ -1,10 +1,10 @@
 const std = @import("std");
-const vec = @import("vector.zig");
+const math = @import("math.zig");
 const Hittable = @import("hittable.zig");
 
-const Point3 = vec.Point3;
-const Vec3 = vec.Vec3;
-const Color = vec.Color;
+const Point3 = math.Point3;
+const Vec3 = math.Vec3;
+const Color = math.Color;
 const Sphere = Hittable.Sphere;
 const HittableList = Hittable.List;
 const HitRecord = Hittable.Record;
@@ -24,7 +24,7 @@ pub fn at(self: *Ray, t: f64) Point3 {
 
 pub fn getColor(self: *Ray, hittable: *Hittable.Item) Color {
     var hr: HitRecord = .new();
-    if (hittable.hit(self, 0, std.math.inf(f64), &hr)) {
+    if (hittable.hit(self, .interval(0, std.math.inf(f64)), &hr)) {
         const ret = hr.normal.add(&Color.new(1, 1, 1)).multScalar(0.5);
         return ret;
     }
