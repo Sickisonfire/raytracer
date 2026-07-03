@@ -22,9 +22,9 @@ pub fn at(self: *Ray, t: f64) Point3 {
     return self.direction.multScalar(t).add(&self.origin);
 }
 
-pub fn getColor(self: *Ray, hittable: *Hittable.Item) Color {
+pub fn getColor(self: *Ray, hittable: Hittable) Color {
     var hr: HitRecord = .new();
-    if (hittable.hit(self, .interval(0, std.math.inf(f64)), &hr)) {
+    if (hittable.item.hit(self, .interval(0, std.math.inf(f64)), &hr)) {
         const ret = hr.normal.add(&Color.new(1, 1, 1)).multScalar(0.5);
         return ret;
     }

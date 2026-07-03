@@ -7,6 +7,14 @@ const Point3 = math.Point3;
 const Ray = ray.Ray;
 const Interval = math.Interval;
 
+const Hittable = @This();
+
+item: Item,
+
+pub fn new(item: Item) Hittable {
+    return .{ .item = item };
+}
+
 pub const Record = struct {
     p: Point3 = .zero,
     normal: Vec3 = .zero,
