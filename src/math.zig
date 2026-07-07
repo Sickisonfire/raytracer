@@ -43,6 +43,16 @@ pub const Vec3 = struct {
         return self.inner[2];
     }
 
+    pub fn r(self: *const Vec3) f64 {
+        return self.inner[0];
+    }
+    pub fn g(self: *const Vec3) f64 {
+        return self.inner[1];
+    }
+    pub fn b(self: *const Vec3) f64 {
+        return self.inner[2];
+    }
+
     /// euclidean length
     ///
     /// use lengthSquared if you only need to compare the length of two vectors.
@@ -76,9 +86,10 @@ pub const Vec3 = struct {
     }
 
     pub fn write_color(out: *std.Io.Writer, color: *const Vec3) !void {
-        const ir: u32 = @intFromFloat(255.999 * color.inner[0]);
-        const ig: u32 = @intFromFloat(255.999 * color.inner[1]);
-        const ib: u32 = @intFromFloat(255.999 * color.inner[2]);
+        const intensity: Interval = .new(0.000, 0.999);
+        const ir: u32 = @intFromFloat(256 * intensity.clamp(color.r()));
+        const ig: u32 = @intFromFloat(256 * intensity.clamp(color.g()));
+        const ib: u32 = @intFromFloat(256 * intensity.clamp(color.b()));
 
         var row_buf: [128]u8 = undefined;
         const pix = try std.fmt.bufPrint(&row_buf, "{d} {d} {d}\n", .{ ir, ig, ib });
@@ -121,5 +132,11 @@ pub const Interval = struct {
 
     pub fn surrounds(self: Interval, x: f64) bool {
         return self.min < x and x < self.max;
+    }
+
+    pub fn clamp(self: Interval, x: f64) f64 {
+        if (x < self.min) return self.min;
+        if (x > self.max) return self.max;
+        return x;
     }
 };

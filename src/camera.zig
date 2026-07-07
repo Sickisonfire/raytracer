@@ -4,6 +4,7 @@ const Hittable = @import("hittable.zig");
 const Ray = @import("ray.zig");
 
 const Vec3 = math.Vec3;
+const Color = math.Color;
 
 const Camera = @This();
 
@@ -23,6 +24,7 @@ pub fn renderToFile(self: Camera, world: Hittable, io: std.Io, dir: std.Io.Dir, 
     try self.viewport.write_ppm(self, world, io, dir, file_name);
 }
 
+/// output size
 const Image = struct {
     width: u32,
     height: u32,
@@ -100,20 +102,28 @@ const Viewport = struct {
         const pixel_0_0 = &viewport_top_left
             .add(&delta_u.add(&delta_v).divScalar(2));
 
+        var xoshiro = std.Random.DefaultPrng.init(1234);
+        var rng = xoshiro.random();
+
+        const px_sample_rate = 10;
         for (0..h) |i| {
             for (0..w) |j| {
                 node.completeOne();
 
-                const px_loc = &pixel_0_0
-                    .add(&delta_u.multScalar(@floatFromInt(j)))
-                    .add(&delta_v.multScalar(@floatFromInt(i)))
-                    .sub(&cam.center);
+                var color: Color = .new(0, 0, 0);
+                for (0..px_sample_rate) |_| {
+                    const offset: Vec3 = .new(rng.float(f64) - 0.5, rng.float(f64) - 0.5, 0);
+                    const px_loc = &pixel_0_0
+                        .add(&delta_u.multScalar(@as(f64, @floatFromInt(j)) + offset.y()))
+                        .add(&delta_v.multScalar(@as(f64, @floatFromInt(i)) + offset.x()))
+                        .sub(&cam.center);
 
-                var ray: Ray = .new(cam.center, px_loc);
+                    var ray: Ray = .new(cam.center, px_loc);
 
-                const color = ray.getColor(world);
+                    color = color.add(&ray.getColor(world));
+                }
 
-                try Vec3.write_color(interface, &color);
+                try Vec3.write_color(interface, &color.multScalar(1.0 / @as(f64, @floatFromInt(px_sample_rate))));
             }
         }
         try writer.flush();
