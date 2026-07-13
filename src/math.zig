@@ -79,10 +79,30 @@ pub const Vec3 = struct {
         } };
     }
 
+    /// random vector
+    ///
+    /// the components of the returned vector have values between -1 and 1
+    pub fn random(rng: *std.Random, range: Interval) Vec3 {
+        const ret = Vec3{ .inner = .{
+            rng.float(f64) * (range.max - range.min) + range.min,
+            rng.float(f64) * (range.max - range.min) + range.min,
+            rng.float(f64) * (range.max - range.min) + range.min,
+        } };
+        return ret;
+    }
+
     pub fn unitVector(self: *const Vec3) Vec3 {
         const len = self.length();
 
         return .{ .inner = self.inner / Vec3.splat(len).inner };
+    }
+
+    pub fn randomUnitVector(rng: *std.Random) Vec3 {
+        while (true) {
+            var v: Vec3 = .random(rng, Interval.new(-1, 1));
+            const sq_len = v.lengthSquared();
+            if (1e-160 < sq_len and sq_len <= 1) return v.divScalar(v.length());
+        }
     }
 
     pub fn write_color(out: *std.Io.Writer, color: *const Vec3) !void {

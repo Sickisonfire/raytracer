@@ -11,16 +11,22 @@ const Camera = @This();
 center: math.Point3,
 focal_length: f64,
 viewport: Viewport,
+prng_source: *std.Random,
+sample_rate: u32,
+max_depth: u32,
 
-pub fn init(center: math.Point3, image_width: u32, aspect_ratio: f64, focal_length: f64) Camera {
+pub fn init(center: math.Point3, image_width: u32, aspect_ratio: f64, focal_length: f64, rng: *std.Random, sample_rate: u32, max_depth: u32) Camera {
     return Camera{
         .center = center,
         .focal_length = focal_length,
         .viewport = .init(.init(image_width, aspect_ratio)),
+        .prng_source = rng,
+        .sample_rate = sample_rate,
+        .max_depth = max_depth,
     };
 }
 
-pub fn renderToFile(self: Camera, world: Hittable, io: std.Io, dir: std.Io.Dir, file_name: []const u8) !void {
+pub fn renderToFile(self: *Camera, world: Hittable, io: std.Io, dir: std.Io.Dir, file_name: []const u8) !void {
     try self.viewport.write_ppm(self, world, io, dir, file_name);
 }
 
@@ -64,7 +70,7 @@ const Viewport = struct {
             .image = image,
         };
     }
-    pub fn write_ppm(self: Viewport, cam: Camera, world: Hittable, io: std.Io, dir: std.Io.Dir, file_name: []const u8) !void {
+    pub fn write_ppm(self: Viewport, cam: *Camera, world: Hittable, io: std.Io, dir: std.Io.Dir, file_name: []const u8) !void {
         var f = try dir.createFile(io, file_name, .{});
         defer f.close(io);
 
@@ -102,28 +108,24 @@ const Viewport = struct {
         const pixel_0_0 = &viewport_top_left
             .add(&delta_u.add(&delta_v).divScalar(2));
 
-        var xoshiro = std.Random.DefaultPrng.init(1234);
-        var rng = xoshiro.random();
-
-        const px_sample_rate = 10;
         for (0..h) |i| {
             for (0..w) |j| {
                 node.completeOne();
 
                 var color: Color = .new(0, 0, 0);
-                for (0..px_sample_rate) |_| {
-                    const offset: Vec3 = .new(rng.float(f64) - 0.5, rng.float(f64) - 0.5, 0);
+                for (0..cam.sample_rate) |_| {
+                    const offset: Vec3 = .new(cam.prng_source.float(f64) - 0.5, cam.prng_source.float(f64) - 0.5, 0);
                     const px_loc = &pixel_0_0
                         .add(&delta_u.multScalar(@as(f64, @floatFromInt(j)) + offset.y()))
                         .add(&delta_v.multScalar(@as(f64, @floatFromInt(i)) + offset.x()))
                         .sub(&cam.center);
 
-                    var ray: Ray = .new(cam.center, px_loc);
+                    var ray: Ray = .new(cam.center, px_loc, cam.prng_source);
 
-                    color = color.add(&ray.getColor(world));
+                    color = color.add(&ray.getColor(world, cam.max_depth));
                 }
 
-                try Vec3.write_color(interface, &color.multScalar(1.0 / @as(f64, @floatFromInt(px_sample_rate))));
+                try Vec3.write_color(interface, &color.multScalar(1.0 / @as(f64, @floatFromInt(cam.sample_rate))));
             }
         }
         try writer.flush();

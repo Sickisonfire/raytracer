@@ -18,7 +18,7 @@ pub fn new(item: Item) Hittable {
 pub const Record = struct {
     p: Point3 = .zero,
     normal: Vec3 = .zero,
-    t: f64 = 0,
+    t: f64 = std.math.inf(f64),
     front_face: bool = false,
 
     pub fn new() Record {
@@ -34,9 +34,9 @@ pub const Item = union(enum) {
     sphere: Sphere,
     list: List,
 
-    pub fn hit(self: Item, r: *Ray, ray_t: Interval, record: *Record) bool {
+    pub fn hit(self: Item, r: *Ray, ray_t: Interval, hr: *Record) bool {
         return switch (self) {
-            inline else => |v| v.hit(r, ray_t, record),
+            inline else => |v| v.hit(r, ray_t, hr),
         };
     }
 };
@@ -61,16 +61,16 @@ pub const List = struct {
         self.list.appendAssumeCapacity(item);
     }
 
-    pub fn hit(self: List, r: *Ray, ray_t: Interval, record: *Record) bool {
-        var temp_record: Record = .new();
+    pub fn hit(self: List, r: *Ray, ray_t: Interval, hr: *Record) bool {
+        var temp: Record = .new();
         var hit_obj = false;
         var closest = ray_t.max;
 
         for (self.list.items) |hittable| {
-            if (hittable.hit(r, .interval(ray_t.min, closest), &temp_record)) {
+            if (hittable.hit(r, .interval(ray_t.min, closest), &temp)) {
                 hit_obj = true;
-                closest = temp_record.t;
-                record.* = temp_record;
+                closest = temp.t;
+                hr.* = temp;
             }
         }
 
@@ -88,7 +88,7 @@ pub const Sphere = struct {
             .radius = @max(0, radius),
         };
     }
-    pub fn hit(self: Sphere, r: *Ray, ray_t: Interval, record: *Record) bool {
+    pub fn hit(self: Sphere, r: *Ray, ray_t: Interval, hr: *Record) bool {
         const oc: Vec3 = self.center.sub(&r.origin);
         const a: f64 = r.direction.lengthSquared();
         const h: f64 = r.direction.dot(&oc);
@@ -103,17 +103,18 @@ pub const Sphere = struct {
 
         var root = (h - sqrt) / a;
 
-        if (root <= ray_t.min or root >= ray_t.max) {
+        if (!ray_t.surrounds(root)) {
             root = (h + sqrt) / a;
-            if (root <= ray_t.min or root >= ray_t.max) {
+            if (!ray_t.surrounds(root)) {
                 return false;
             }
         }
 
-        record.t = root;
-        record.p = r.at(record.t);
-        const outward_normal = (record.p.sub(&self.center).divScalar(self.radius));
-        record.setFaceNormal(r, &outward_normal);
+        // record is only mutated on hit
+        hr.t = root;
+        hr.p = r.at(hr.t);
+        const outward_normal = hr.p.sub(&self.center).divScalar(self.radius);
+        hr.setFaceNormal(r, &outward_normal);
 
         return true;
     }

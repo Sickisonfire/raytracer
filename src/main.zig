@@ -11,6 +11,10 @@ pub fn main(init: std.process.Init) !void {
     defer _ = init.arena.reset(.free_all);
     const io = init.io;
     const dir = try std.Io.Dir.cwd().openDir(io, "zig-out", .{});
+    defer dir.close(io);
+
+    var xoshiro = std.Random.DefaultPrng.init(1234);
+    var rng = xoshiro.random();
 
     var h1 = Hittable.Item{ .sphere = .new(.new(0, 0, -1), 0.5) };
     var h2 = Hittable.Item{ .sphere = .new(.new(0, -100.5, -1), 100) };
@@ -22,6 +26,6 @@ pub fn main(init: std.process.Init) !void {
     try world_list.append(&h2);
     const world: Hittable = .new(.{ .list = world_list });
 
-    const camera: Camera = .init(.zero, 400, 16.0 / 9.0, 1.0);
+    var camera: Camera = .init(.zero, 400, 16.0 / 9.0, 1.0, &rng, 100, 50);
     try camera.renderToFile(world, io, dir, "out.ppm");
 }

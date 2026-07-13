@@ -13,20 +13,37 @@ pub const Ray = @This();
 
 origin: Point3,
 direction: Vec3,
+hit_record: HitRecord,
+prng_source: *std.Random,
 
-pub fn new(origin: Point3, direction: *const Vec3) Ray {
-    return Ray{ .origin = origin, .direction = direction.* };
+pub fn new(origin: Point3, direction: *const Vec3, prng: *std.Random) Ray {
+    return Ray{ .origin = origin, .direction = direction.*, .hit_record = .new(), .prng_source = prng };
 }
 
 pub fn at(self: *Ray, t: f64) Point3 {
     return self.direction.multScalar(t).add(&self.origin);
 }
 
-pub fn getColor(self: *Ray, hittable: Hittable) Color {
+pub fn getColor(self: *Ray, hittable: Hittable, depth: u32) Color {
     var hr: HitRecord = .new();
-    if (hittable.item.hit(self, .interval(0, std.math.inf(f64)), &hr)) {
-        const ret = hr.normal.add(&Color.new(1, 1, 1)).multScalar(0.5);
-        return ret;
+    if (depth <= 0) return Color.new(0, 0, 0);
+    if (hittable.item.hit(self, .interval(0.001, std.math.inf(f64)), &hr)) {
+        const direction = blk: {
+            // hemisphere check
+            const rand_unit_vec: Vec3 = .randomUnitVector(self.prng_source);
+            if (rand_unit_vec.dot(&hr.normal) > 0) {
+                break :blk rand_unit_vec;
+            } else {
+                break :blk rand_unit_vec.multScalar(-1);
+            }
+        };
+        // std.debug.print("{any}\n", .{direction});
+
+        // const ret = self.hit_record.normal.add(&Color.new(1, 1, 1)).multScalar(0.5);
+        // return ret;
+
+        var r: Ray = .new(hr.p, &direction, self.prng_source);
+        return r.getColor(hittable, depth - 1).multScalar(0.5);
     }
 
     const unit_dir = self.direction.unitVector();
