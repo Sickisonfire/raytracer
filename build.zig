@@ -21,7 +21,7 @@ pub fn build(b: *std.Build) void {
     run_cmd.step.dependOn(b.getInstallStep());
 
     const show_cmd = b.addSystemCommand(&.{"kitty"});
-    show_cmd.addArgs(&.{ "+kitten", "icat", "./zig-out/out.ppm" });
+    show_cmd.addArgs(&.{ "+kitten", "icat", "--scale-up", "./zig-out/out.ppm" });
     show_cmd.step.dependOn(&run_cmd.step);
 
     const clean_step = b.step("clean", "Clean");

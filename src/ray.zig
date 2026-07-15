@@ -28,19 +28,7 @@ pub fn getColor(self: *Ray, hittable: Hittable, depth: u32) Color {
     var hr: HitRecord = .new();
     if (depth <= 0) return Color.new(0, 0, 0);
     if (hittable.item.hit(self, .interval(0.001, std.math.inf(f64)), &hr)) {
-        const direction = blk: {
-            // hemisphere check
-            const rand_unit_vec: Vec3 = .randomUnitVector(self.prng_source);
-            if (rand_unit_vec.dot(&hr.normal) > 0) {
-                break :blk rand_unit_vec;
-            } else {
-                break :blk rand_unit_vec.multScalar(-1);
-            }
-        };
-        // std.debug.print("{any}\n", .{direction});
-
-        // const ret = self.hit_record.normal.add(&Color.new(1, 1, 1)).multScalar(0.5);
-        // return ret;
+        const direction = Vec3.randomUnitVector(self.prng_source).add(&hr.normal);
 
         var r: Ray = .new(hr.p, &direction, self.prng_source);
         return r.getColor(hittable, depth - 1).multScalar(0.5);
