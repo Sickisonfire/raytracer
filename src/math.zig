@@ -106,16 +106,29 @@ pub const Vec3 = struct {
     }
 
     pub fn write_color(out: *std.Io.Writer, color: *const Vec3) !void {
-        const intensity: Interval = .new(0.000, 0.999);
-        const ir: u32 = @intFromFloat(256 * intensity.clamp(color.r()));
-        const ig: u32 = @intFromFloat(256 * intensity.clamp(color.g()));
-        const ib: u32 = @intFromFloat(256 * intensity.clamp(color.b()));
+        {
+            const _r = linearToGamma(color.r());
+            const _g = linearToGamma(color.g());
+            const _b = linearToGamma(color.b());
+            const intensity: Interval = .new(0.000, 0.999);
+            const ir: u32 = @intFromFloat(256 * intensity.clamp(_r));
+            const ig: u32 = @intFromFloat(256 * intensity.clamp(_g));
+            const ib: u32 = @intFromFloat(256 * intensity.clamp(_b));
 
-        var row_buf: [128]u8 = undefined;
-        const pix = try std.fmt.bufPrint(&row_buf, "{d} {d} {d}\n", .{ ir, ig, ib });
-        _ = try out.write(pix);
+            var row_buf: [128]u8 = undefined;
+            const pix = try std.fmt.bufPrint(&row_buf, "{d} {d} {d}\n", .{ ir, ig, ib });
+            _ = try out.write(pix);
+        }
     }
 };
+
+fn linearToGamma(linear_value: f64) f64 {
+    if (linear_value > 0) {
+        return std.math.sqrt(linear_value);
+    }
+
+    return 0;
+}
 
 pub const Interval = struct {
     min: f64,
