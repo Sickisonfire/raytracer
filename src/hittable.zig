@@ -34,9 +34,9 @@ pub const Item = union(enum) {
     sphere: Sphere,
     list: List,
 
-    pub fn hit(self: Item, r: *Ray, ray_t: Interval, hr: *Record) bool {
+    pub fn hit(self: Item, r: *Ray, ray_t: Interval) bool {
         return switch (self) {
-            inline else => |v| v.hit(r, ray_t, hr),
+            inline else => |v| v.hit(r, ray_t),
         };
     }
 };
@@ -61,16 +61,14 @@ pub const List = struct {
         self.list.appendAssumeCapacity(item);
     }
 
-    pub fn hit(self: List, r: *Ray, ray_t: Interval, hr: *Record) bool {
-        var temp: Record = .new();
+    pub fn hit(self: List, r: *Ray, ray_t: Interval) bool {
         var hit_obj = false;
         var closest = ray_t.max;
 
         for (self.list.items) |hittable| {
-            if (hittable.hit(r, .interval(ray_t.min, closest), &temp)) {
+            if (hittable.hit(r, .interval(ray_t.min, closest))) {
                 hit_obj = true;
-                closest = temp.t;
-                hr.* = temp;
+                closest = r.hit_record.t;
             }
         }
 
@@ -88,7 +86,8 @@ pub const Sphere = struct {
             .radius = @max(0, radius),
         };
     }
-    pub fn hit(self: Sphere, r: *Ray, ray_t: Interval, hr: *Record) bool {
+    pub fn hit(self: Sphere, r: *Ray, ray_t: Interval) bool {
+        var hr = &r.hit_record;
         const oc: Vec3 = self.center.sub(&r.origin);
         const a: f64 = r.direction.lengthSquared();
         const h: f64 = r.direction.dot(&oc);

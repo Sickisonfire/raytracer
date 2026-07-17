@@ -25,9 +25,9 @@ pub fn at(self: *Ray, t: f64) Point3 {
 }
 
 pub fn getColor(self: *Ray, hittable: Hittable, depth: u32) Color {
-    var hr: HitRecord = .new();
+    var hr = &self.hit_record;
     if (depth <= 0) return Color.new(0, 0, 0);
-    if (hittable.item.hit(self, .interval(0.001, std.math.inf(f64)), &hr)) {
+    if (hittable.item.hit(self, .interval(0.001, std.math.inf(f64)))) {
         const direction = Vec3.randomUnitVector(self.prng_source).add(&hr.normal);
 
         var r: Ray = .new(hr.p, &direction, self.prng_source);
