@@ -1,8 +1,9 @@
 const std = @import("std");
 const math = @import("math.zig");
-const Hittable = @import("hittable.zig");
+const hittable = @import("hittable.zig");
 const Ray = @import("ray.zig");
 
+const Hittable = hittable.Hittable;
 const Vec3 = math.Vec3;
 const Color = math.Color;
 
@@ -26,7 +27,7 @@ pub fn init(center: math.Point3, image_width: u32, aspect_ratio: f64, focal_leng
     };
 }
 
-pub fn renderToFile(self: *Camera, world: Hittable, io: std.Io, dir: std.Io.Dir, file_name: []const u8) !void {
+pub fn renderToFile(self: *Camera, world: *Hittable, io: std.Io, dir: std.Io.Dir, file_name: []const u8) !void {
     try self.viewport.write_ppm(self, world, io, dir, file_name);
 }
 
@@ -70,7 +71,7 @@ const Viewport = struct {
             .image = image,
         };
     }
-    pub fn write_ppm(self: Viewport, cam: *Camera, world: Hittable, io: std.Io, dir: std.Io.Dir, file_name: []const u8) !void {
+    pub fn write_ppm(self: Viewport, cam: *Camera, world: *Hittable, io: std.Io, dir: std.Io.Dir, file_name: []const u8) !void {
         var f = try dir.createFile(io, file_name, .{});
         defer f.close(io);
 

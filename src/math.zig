@@ -20,6 +20,9 @@ pub const Vec3 = struct {
     pub fn sub(self: *const Vec3, other: *const Vec3) Vec3 {
         return .{ .inner = self.inner - other.inner };
     }
+    pub fn mult(self: *const Vec3, other: *const Vec3) Vec3 {
+        return .{ .inner = self.inner * other.inner };
+    }
 
     pub fn multScalar(self: *const Vec3, t: f64) Vec3 {
         return .{ .inner = self.inner * Vec3.splat(t).inner };

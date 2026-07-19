@@ -1,13 +1,16 @@
 const std = @import("std");
 const math = @import("math.zig");
-const Hittable = @import("hittable.zig");
+const h = @import("hittable.zig");
+const mat = @import("material.zig");
 
 const Point3 = math.Point3;
 const Vec3 = math.Vec3;
 const Color = math.Color;
-const Sphere = Hittable.Sphere;
-const HittableList = Hittable.List;
-const HitRecord = Hittable.Record;
+const Sphere = h.Sphere;
+const HittableList = h.List;
+const HitRecord = h.Record;
+const Hittable = h.Hittable;
+const Material = mat.Material;
 
 pub const Ray = @This();
 
@@ -17,21 +20,23 @@ hit_record: HitRecord,
 prng_source: *std.Random,
 
 pub fn new(origin: Point3, direction: *const Vec3, prng: *std.Random) Ray {
-    return Ray{ .origin = origin, .direction = direction.*, .hit_record = .new(), .prng_source = prng };
+    return Ray{ .origin = origin, .direction = direction.*, .hit_record = .default, .prng_source = prng };
 }
 
 pub fn at(self: *Ray, t: f64) Point3 {
     return self.direction.multScalar(t).add(&self.origin);
 }
 
-pub fn getColor(self: *Ray, hittable: Hittable, depth: u32) Color {
-    var hr = &self.hit_record;
+pub fn getColor(self: *Ray, hittable: *Hittable, depth: u32) Color {
+    var attenuation: Color = undefined;
     if (depth <= 0) return Color.new(0, 0, 0);
-    if (hittable.item.hit(self, .interval(0.001, std.math.inf(f64)))) {
-        const direction = Vec3.randomUnitVector(self.prng_source).add(&hr.normal);
-
-        var r: Ray = .new(hr.p, &direction, self.prng_source);
-        return r.getColor(hittable, depth - 1).multScalar(0.5);
+    if (hittable.vtable.hit(hittable, self, .interval(0.001, std.math.inf(f64)))) {
+        // FIXME: Better solution?
+        if (self.hit_record.material.vtable.scatter(self.hit_record.material, self.*, &attenuation)) |r| {
+            var ret = r;
+            return ret.getColor(hittable, depth - 1).mult(&attenuation);
+        }
+        return Color.new(0, 0, 0);
     }
 
     const unit_dir = self.direction.unitVector();
