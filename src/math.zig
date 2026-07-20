@@ -107,6 +107,10 @@ pub const Vec3 = struct {
             if (1e-160 < sq_len and sq_len <= 1) return v.divScalar(v.length());
         }
     }
+    pub fn nearZero(self: *const Vec3) bool {
+        const s = 1e-8;
+        return (@abs(self.inner[0]) < s and @abs(self.inner[1]) < s and @abs(self.inner[2]) < s);
+    }
 
     pub fn write_color(out: *std.Io.Writer, color: *const Vec3) !void {
         {

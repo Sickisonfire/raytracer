@@ -29,12 +29,15 @@ pub const Lambert = struct {
         };
     }
     pub fn scatter(mat: *Material, ray: Ray, attenuation: *Color) ?Ray {
-        // const self: Lambert = @alignCast(@fieldParentPtr("interface", mat));
-        const direction = Vec3.randomUnitVector(ray.prng_source).add(&ray.hit_record.normal);
+        const direction = blk: {
+            var ret = Vec3.randomUnitVector(ray.prng_source).add(&ray.hit_record.normal);
+            if (ret.nearZero()) {
+                break :blk ray.hit_record.normal;
+            }
+            break :blk ret;
+        };
         attenuation.* = mat.albedo;
 
-        // FIXME: mat is only a placeholder; need some kind of default or empty
-        // material
         return .new(ray.hit_record.p, &direction, ray.prng_source);
     }
 };
@@ -56,10 +59,7 @@ pub const Metal = struct {
         const n = ray.hit_record.normal;
         const len = ray.direction.dot(&n);
 
-        const direction =
-            ray.direction
-                .sub(&n.multScalar(len)
-                .multScalar(2));
+        const direction = ray.direction.sub(&n.multScalar(len).multScalar(2));
         attenuation.* = mat.albedo;
 
         return .new(ray.hit_record.p, &direction, ray.prng_source);
