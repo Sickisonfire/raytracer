@@ -43,9 +43,11 @@ pub const Lambert = struct {
 };
 
 pub const Metal = struct {
+    fuzz: f64,
     interface: Material,
-    pub fn new(albedo: Color) Metal {
+    pub fn new(albedo: Color, fuzz: f64) Metal {
         return .{
+            .fuzz = if (fuzz < 1) fuzz else 1,
             .interface = .{
                 .albedo = albedo,
                 .vtable = &.{
@@ -55,13 +57,19 @@ pub const Metal = struct {
         };
     }
 
-    pub fn scatter(mat: *Material, ray: Ray, attenuation: *Color) ?Ray {
-        const n = ray.hit_record.normal;
-        const len = ray.direction.dot(&n);
+    pub fn scatter(mat: *Material, ray_in: Ray, attenuation: *Color) ?Ray {
+        const self: *Metal = @alignCast(@fieldParentPtr("interface", mat));
+        const n = ray_in.hit_record.normal;
+        const len = ray_in.direction.dot(&n);
+        const reflected = ray_in.direction.sub(&n.multScalar(len).multScalar(2));
+        const v_fuzz = Vec3.randomUnitVector(ray_in.prng_source).multScalar(self.fuzz);
+        const direction = reflected.unitVector().add(&v_fuzz);
 
-        const direction = ray.direction.sub(&n.multScalar(len).multScalar(2));
         attenuation.* = mat.albedo;
+        if (direction.dot(&ray_in.hit_record.normal) > 0) {
+            return .new(ray_in.hit_record.p, &direction, ray_in.prng_source);
+        }
 
-        return .new(ray.hit_record.p, &direction, ray.prng_source);
+        return null;
     }
 };

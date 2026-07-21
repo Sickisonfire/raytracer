@@ -21,8 +21,8 @@ pub fn main(init: std.process.Init) !void {
 
     var mat_ground: mat.Lambert = .new(math.Color.new(0.8, 0.8, 0.0));
     var mat_center: mat.Lambert = .new(math.Color.new(0.1, 0.2, 0.5));
-    var mat_left: mat.Metal = .new(math.Color.new(0.8, 0.8, 0.8));
-    var mat_right: mat.Metal = .new(math.Color.new(0.8, 0.6, 0.2));
+    var mat_left: mat.Metal = .new(math.Color.new(0.8, 0.8, 0.8), 0.3);
+    var mat_right: mat.Metal = .new(math.Color.new(0.8, 0.6, 0.2), 1);
 
     var sp_center: Sphere = .new(.new(0, 0, -1.2), 0.5, &mat_center.interface);
     var sp_left: Sphere = .new(.new(-1, 0, -1.0), 0.5, &mat_left.interface);
